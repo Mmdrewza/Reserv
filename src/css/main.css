@@ -1,0 +1,499 @@
+@font-face {
+  font-family: "Vazirmatn";
+  src: url("/fonts/Vazir-Light.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Vazirmatn";
+  src: url("/fonts/Vazir-Medium.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Vazirmatn";
+  src: url("/fonts/Vazir-Bold.woff2") format("woff2");
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  width: 100%;
+  height: 100%;
+}
+
+body {
+  font-family: "Vazirmatn", sans-serif;
+  overflow: hidden;
+  margin: 0;
+}
+
+.konvajs-content {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000;
+  will-change: transform;
+}
+
+.logo-container {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.logo-container div {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #262626;
+  border-radius: 10px;
+  padding: 18px;
+  border: 1px solid #555555;
+  z-index: 10;
+  cursor: pointer;
+  transition: border 0.2s ease;
+}
+
+.logo-container div:hover {
+  border-color: #959595;
+}
+
+.logo-container div svg {
+  fill: #fff;
+}
+
+.toolbar {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  background: #262626;
+  border: 1px solid #555555;
+  padding: 10px 20px;
+  border-radius: 8px;
+  font-family: 'Vazirmatn', sans-serif;
+  direction: rtl;
+}
+
+.input-group {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  background-color: #323232;
+}
+
+.input-group label {
+  color: #fff;
+}
+
+.input-group input {
+  width: 50px;
+  padding: 5px;
+  border: none;
+  outline: none;
+  background-color: transparent;
+  border-radius: 4px;
+  color: #fff;
+  direction: ltr;
+}
+
+.btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #323232;
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.btn-action {
+  background: #323232;
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.btn-action:hover,
+.btn:hover {
+  color: #ff6900;
+}
+
+.save {
+  background: #ff6900;
+  color: white;
+  border: none;
+  padding: 10px 15px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background 0.2s ease-in;
+}
+
+.save:hover {
+  color: white;
+  background: #ff8025;
+}
+
+#container {
+  width: 100vw;
+  height: 100vh;
+  background: #171717;
+}
+
+/* استایل منوی حذف صندلی */
+.context-menu {
+  display: none;
+  position: absolute;
+  z-index: 100;
+  background: #262626;
+  border: 1px solid #555555;
+  border-radius: 6px;
+  overflow: hidden;
+  font-family: 'Vazirmatn', sans-serif;
+}
+
+.context-menu button {
+  background: none;
+  border: none;
+  padding: 10px 5px;
+  width: 100%;
+  text-align: right;
+  font-size: 13px;
+  cursor: pointer;
+  color: #c0392b;
+  font-weight: bold;
+}
+
+.context-menu button:hover {
+  background: #323232;
+}
+
+
+
+/* استایل منوی انتخاب فضا */
+
+.custom-select option[value="__add_new__"] {
+  background-color: #2a2a2a;
+  color: #ff6900;
+  font-weight: bold;
+  border-top: 1px solid #444;
+}
+
+
+
+
+
+/* سایدبار کشویی سمت راست */
+.sidebar-drawer {
+  position: fixed;
+  top: 0;
+  right: -320px; /* در حالت پیش‌فرض خارج از صفحه */
+  width: 300px;
+  height: 100vh;
+  background-color: #1e1e1e;
+  border-left: 1px solid #333;
+  box-shadow: -5px 0 15px rgba(0, 0, 0, 0.5);
+  z-index: 999;
+  transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  box-sizing: border-box;
+  color: #fff;
+  font-family: "Vazirmatn", sans-serif;
+}
+
+/* کلاس فعال جهت باز شدن سایدبار */
+.sidebar-drawer.open {
+  right: 0;
+}
+
+.sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #333;
+  padding-bottom: 12px;
+  margin-bottom: 20px;
+}
+
+.sidebar-header h3 {
+  margin: 0;
+  font-size: 16px;
+  color: #ff6900;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  color: #888;
+  font-size: 22px;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.close-btn:hover {
+  color: #fff;
+}
+
+.sidebar-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.info-badge {
+  background-color: #2a2a2a;
+  border: 1px dashed #555;
+  padding: 10px;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #ccc;
+  text-align: center;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-group label {
+  font-size: 13px;
+  color: #aaa;
+}
+
+.form-group input,
+.form-group select {
+  background-color: #2a2a2a;
+  border: 1px solid #444;
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  border-color: #ff6900;
+}
+
+
+
+
+/* Dropdown سفارشی فضاها */
+.custom-dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.dropdown-trigger {
+  background-color: #333;
+  color: #fff;
+  border: 1px solid #444;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-family: inherit;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  width: 220px;
+  background-color: #262626;
+  border: 1px solid #444;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+  display: none;
+  flex-direction: column;
+  padding: 8px;
+  z-index: 9999;
+}
+
+.dropdown-menu.show {
+  display: flex !important;
+}
+
+.dropdown-item {
+  padding: 8px 12px;
+  font-size: 13px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.dropdown-item:hover, .dropdown-item.active {
+  background-color: #333;
+  color: #ff6900;
+}
+
+.dropdown-divider {
+  height: 1px;
+  background-color: #333;
+  margin: 6px 0;
+}
+
+.add-zone-btn {
+  background: none;
+  border: none;
+  color: #ff6900;
+  padding: 6px 8px;
+  text-align: right;
+  font-family: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.add-zone-input-wrapper {
+  display: flex;
+  gap: 4px;
+  padding: 4px 0;
+}
+
+.add-zone-input-wrapper input {
+  width: 100%;
+  background: #171717;
+  border: 1px solid #444;
+  color: #fff;
+  padding: 6px 8px;
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 12px;
+}
+
+
+
+
+
+
+
+
+
+
+/* استایل لیبل انتخاب فضا */
+.control-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.zone-label {
+  color: #ccc;
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* ساختار بخش trigger و دکمه ویرایش */
+.zone-header-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.icon-btn {
+  background: #333;
+  border: 1px solid #444;
+  color: #aaa;
+  border-radius: 6px;
+  padding: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.icon-btn:hover {
+  background: #444;
+  color: #ff6900;
+  border-color: #555;
+}
+
+.edit-zone-input {
+  background: #171717;
+  color: #fff;
+  border: 1px solid #ff6900;
+  border-radius: 6px;
+  padding: 5px 8px;
+  font-family: inherit;
+  font-size: 13px;
+  outline: none;
+  width: 110px;
+}
+
+/* استایل جدید و هماهنگ دکمه افزودن فضای جدید */
+.btn-add-zone {
+  width: 100%;
+  background: rgba(255, 105, 0, 0.1);
+  color: #ff6900;
+  border: 1px dashed #ff6900;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.btn-add-zone:hover {
+  background: #ff6900;
+  color: #fff;
+  border-style: solid;
+}
+
+.dropdown-footer {
+  border-top: 1px solid #333;
+  padding-top: 6px;
+  margin-top: 6px;
+}
+
+
+.dropdown-item {
+  padding: 8px 12px;
+  font-size: 13px;
+  cursor: pointer;
+  border-radius: 4px;
+  color: #ffffff; /* رنگ متن پیش‌فرض سفید */
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.dropdown-item:hover, 
+.dropdown-item.active {
+  background-color: #333333;
+  color: #ff6900; /* رنگ نارنجی هنگام هور یا انتخاب بودن */
+}

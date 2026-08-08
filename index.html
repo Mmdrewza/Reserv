@@ -1,0 +1,254 @@
+<!-- فایل index.html -->
+<!doctype html>
+<html lang="en" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>hall-editor</title>
+  </head>
+  <body>
+   <div class="toolbar">
+      <!-- بخش انتخاب فضا -->
+      <div class="control-group">
+        <label class="zone-label">انتخاب فضا:</label>
+        <div id="zone-dropdown" class="custom-dropdown">
+          <div class="zone-header-wrapper">
+            <button id="dropdown-trigger" class="dropdown-trigger">
+              <span id="current-zone-label">سالن اصلی</span>
+              <svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M7 10l5 5 5-5z"></path>
+              </svg>
+            </button>
+            <!-- دکمه ویرایش نام فضای فعلی -->
+            <button id="edit-zone-name-btn" class="icon-btn" title="ویرایش نام فضا">
+              <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34a.9959.9959 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+              </svg>
+            </button>
+            <input type="text" id="edit-zone-input" class="edit-zone-input" style="display: none;" />
+          </div>
+
+          <div id="dropdown-menu" class="dropdown-menu">
+            <div id="options-list" class="options-list"></div>
+            <div class="dropdown-footer">
+              <button id="show-add-input-btn" class="btn-add-zone">
+                + افزودن فضای جدید
+              </button>
+              <div
+                id="add-zone-input-wrapper"
+                style="display: none; gap: 5px; padding: 5px"
+              >
+                <input
+                  type="text"
+                  id="new-zone-input"
+                  placeholder="نام فضا..."
+                  style="
+                    width: 100%;
+                    background: #333;
+                    color: #fff;
+                    border: 1px solid #555;
+                    border-radius: 4px;
+                    padding: 4px;
+                  "
+                />
+                <button
+                  id="confirm-add-zone-btn"
+                  class="btn"
+                  style="background: #27ae60"
+                >
+                  ✔
+                </button>
+                <button
+                  id="cancel-add-zone-btn"
+                  class="btn"
+                  style="background: #e74c3c"
+                >
+                  ✖
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="input-group">
+        <select
+          id="tool-select"
+          style="
+            background: transparent;
+            color: white;
+            border: none;
+            outline: none;
+            cursor: pointer;
+            font-family: 'Vazirmatn';
+            padding: 2px 5px;
+          "
+        >
+          <option value="move" style="background: #262626">Move (V)</option>
+          <option value="hand" style="background: #262626">Hand tool (H)</option>
+        </select>
+      </div>
+
+      <button title="بازگردانی" id="undo-btn" class="btn-history btn">
+        <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
+          <path
+            d="m7.84 13.75 1.33-1.49-2.53-2.25h8.37c2.21 0 4 1.79 4 4s-1.79 4-4 4h-3v2h3c3.31 0 6-2.69 6-6s-2.69-6-6-6H6.63l2.53-2.25-1.33-1.49-5.34 4.75 5.34 4.75Z"
+          ></path>
+        </svg>
+      </button>
+      <button title="انجام مجدد" id="redo-btn" class="btn-history btn">
+        <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
+          <path
+            d="M9 8c-3.31 0-6 2.69-6 6s2.69 6 6 6h3v-2H9c-2.21 0-4-1.79-4-4s1.79-4 4-4h8.37l-2.53 2.25 1.33 1.49 5.34-4.75-5.34-4.75-1.33 1.49 2.53 2.25H9Z"
+          ></path>
+        </svg>
+      </button>
+
+      <!-- بخش متغیر تولبار -->
+      <div
+        id="contextual-controls"
+        style="
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          border-right: 1px solid #444;
+          border-left: 1px solid #444;
+          padding: 0 10px;
+        "
+      >
+        <!-- هنگام انتخاب سکشن نمایش داده می‌شود -->
+        <div
+          id="section-toolbar"
+          style="display: none; align-items: center; gap: 10px"
+        >
+          <div class="input-group">
+            <label>نام سکشن:</label>
+            <input
+              type="text"
+              id="sec-name-input"
+              style="
+                width: 100px;
+                background: #333;
+                color: #fff;
+                border: 1px solid #555;
+                border-radius: 4px;
+                padding: 2px 6px;
+              "
+            />
+          </div>
+          <div class="input-group">
+            <label>ردیف‌ها:</label>
+            <input
+              type="number"
+              id="sec-rows-input"
+              min="1"
+              style="
+                width: 50px;
+                background: #333;
+                color: #fff;
+                border: 1px solid #555;
+                border-radius: 4px;
+                padding: 2px 6px;
+              "
+            />
+          </div>
+          <div class="input-group">
+            <label>صندلی/ردیف:</label>
+            <input
+              type="number"
+              id="sec-cols-input"
+              min="1"
+              style="
+                width: 50px;
+                background: #333;
+                color: #fff;
+                border: 1px solid #555;
+                border-radius: 4px;
+                padding: 2px 6px;
+              "
+            />
+          </div>
+
+          <button id="add-seat-btn" title="افزودن صندلی تک" class="btn">
+            <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M3 13h8v8h2v-8h8v-2h-8V3h-2v8H3z"></path>
+            </svg>
+          </button>
+
+          <button
+            id="delete-section-toolbar-btn"
+            class="btn-action"
+            style="background: #e74c3c"
+          >
+            حذف سکشن
+          </button>
+        </div>
+
+        <!-- هنگام انتخاب صندلی نمایش داده می‌شود -->
+        <div
+          id="seat-toolbar"
+          style="display: none; align-items: center; gap: 10px"
+        >
+          <button
+            id="delete-seat-toolbar-btn"
+            class="btn-action"
+            style="background: #e74c3c"
+          >
+            حذف صندلی‌های انتخابی
+          </button>
+        </div>
+      </div>
+
+      <button id="generate-grid-btn" class="btn-action">
+        افزودن سکشن جدید
+      </button>
+      <button id="save-btn" class="btn save">ذخیره سالن</button>
+    </div>
+
+    <!-- سایدبار کشویی تنظیمات صندلی -->
+    <div id="seat-sidebar" class="sidebar-drawer">
+      <div class="sidebar-header">
+        <h3>تنظیمات صندلی</h3>
+        <button id="close-sidebar-btn" class="close-btn">&times;</button>
+      </div>
+
+      <div class="sidebar-content">
+        <div class="info-badge" id="sidebar-seat-info">صندلی انتخاب نشده</div>
+
+        <div class="form-group">
+          <label for="seat-label-input">متن / شماره سفارشی صندلی:</label>
+          <input
+            type="text"
+            id="seat-label-input"
+            placeholder="مثلاً: A1 یا 12"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="seat-price-input">قیمت (تومان):</label>
+          <input
+            type="number"
+            id="seat-price-input"
+            placeholder="مثلاً ۱50000"
+            min="0"
+            step="1000"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="seat-type-select">نوع صندلی:</label>
+          <select id="seat-type-select">
+            <option value="regular">عادی (Regular)</option>
+            <option value="vip">ویژه (VIP)</option>
+            <option value="wheelchair">ویلچر (Wheelchair)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div id="container"></div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
