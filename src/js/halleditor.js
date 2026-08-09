@@ -27,6 +27,24 @@ let zoneHistory = {
   floor_1: { history: [], index: -1 },
 };
 
+let zoneIdToDelete = null;
+
+// --- خواندن دیتا از LocalStorage هنگام لود اولیه ---
+function loadFromLocalStorage() {
+  const savedData = localStorage.getItem("salon_layout_data");
+  if (savedData) {
+    try {
+      const parsedFloors = JSON.parse(savedData);
+      if (Array.isArray(parsedFloors) && parsedFloors.length > 0) {
+        floors = parsedFloors;
+        currentFloorId = floors[0].id;
+      }
+    } catch (e) {
+      console.error("خطا در خواندن داده‌های LocalStorage:", e);
+    }
+  }
+}
+
 function getCurrentFloor() {
   return floors.find((f) => f.id === currentFloorId) || floors[0];
 }
@@ -39,8 +57,9 @@ function setActiveSections(newData) {
   getCurrentFloor().sections = newData;
 }
 
-// --- مدیریت تاریخچه Undo / Redo ---
+// --- مدیریت تاریخچه Undo / Redo و ذخیره‌سازی خودکار در LocalStorage ---
 function saveState() {
+  // ۱. بروزرسانی سابقه داخلی
   if (!zoneHistory[currentFloorId]) {
     zoneHistory[currentFloorId] = { history: [], index: -1 };
   }
@@ -51,6 +70,13 @@ function saveState() {
   const currentFloorObj = getCurrentFloor();
   hData.history.push(JSON.stringify(currentFloorObj.sections));
   hData.index++;
+
+  // ۲. ذخیره خودکار وضعیت کامل کل فضاها در LocalStorage مرورگر
+  try {
+    localStorage.setItem("salon_layout_data", JSON.stringify(floors));
+  } catch (e) {
+    console.error("خطا در ذخیره‌سازی در LocalStorage:", e);
+  }
 }
 
 function undo() {
@@ -61,6 +87,7 @@ function undo() {
     clearSelection();
     closeSidebar();
     renderSeats();
+    localStorage.setItem("salon_layout_data", JSON.stringify(floors));
   }
 }
 
@@ -72,6 +99,7 @@ function redo() {
     clearSelection();
     closeSidebar();
     renderSeats();
+    localStorage.setItem("salon_layout_data", JSON.stringify(floors));
   }
 }
 
@@ -228,6 +256,33 @@ let selectionRect = new Konva.Rect({
 });
 layer.add(selectionRect);
 
+// --- مدیریت راست‌کلیک برای Hand Tool (Pan Screen) ---
+let isRightClickDragging = false;
+
+// غیرفعال کردن منوی راست‌کلیک مرورگر روی بوم
+stage.container().addEventListener("contextmenu", (e) => {
+  e.preventDefault();
+});
+
+stage.on("mousedown", (e) => {
+  if (e.evt.button === 2) { // دکمه راست موس
+    e.evt.preventDefault();
+    isRightClickDragging = true;
+    stage.draggable(true);
+    stage.startDrag();
+    stage.container().style.cursor = "grabbing";
+  }
+});
+
+window.addEventListener("mouseup", (e) => {
+  if (e.button === 2 && isRightClickDragging) {
+    isRightClickDragging = false;
+    stage.stopDrag();
+    stage.draggable(false);
+    stage.container().style.cursor = "default";
+  }
+});
+
 // --- مدیریت تولبارها ---
 function updateToolbarContext() {
   const sectionTb = document.getElementById("section-toolbar");
@@ -315,7 +370,7 @@ function renderSeats() {
     const sectionGroup = new Konva.Group({
       x: sec.x,
       y: sec.y,
-      draggable: currentTool === "move",
+      draggable: true,
       id: sec.id,
     });
 
@@ -327,6 +382,7 @@ function renderSeats() {
     });
 
     sectionGroup.on("click", (e) => {
+      if (e.evt.button !== 0) return; // تنها با کلیک چپ
       if (e.target === sectionBox || e.target === sectionTitle) {
         e.cancelBubble = true;
         selectedSectionId = sec.id;
@@ -493,7 +549,7 @@ function renderSeats() {
         x: seat.x,
         y: seat.y,
         id: seat.id,
-        draggable: currentTool === "move",
+        draggable: true,
       });
 
       let strokeColor = "#BBBBBB";
@@ -552,7 +608,6 @@ function renderSeats() {
         });
 
         lastValidPosition = { x: e.target.x(), y: e.target.y() };
-        stage.draggable(false);
       });
 
       seatGroup.on("dragmove", (e) => {
@@ -649,6 +704,7 @@ function renderSeats() {
       });
 
       seatGroup.on("click", (e) => {
+        if (e.evt.button !== 0) return; // تنها کلیک چپ
         e.cancelBubble = true;
         selectedSectionId = null;
 
@@ -686,7 +742,7 @@ function renderSeats() {
 
 // --- کلیک روی بوم (Deselect) ---
 stage.on("click", (e) => {
-  if (e.target === stage) {
+  if (e.evt.button === 0 && e.target === stage) {
     clearSelection();
     closeSidebar();
     renderSeats();
@@ -824,7 +880,7 @@ function updateSelectedSectionDimensions(newRows, newCols) {
   renderSeats();
 }
 
-// --- مدیریت فضاها ---
+// --- مدیریت فضاها و درگ Drag & Drop منو ---
 function renderZoneSelectOptions() {
   const optionsList = document.getElementById("options-list");
   const currentLabel = document.getElementById("current-zone-label");
@@ -832,10 +888,30 @@ function renderZoneSelectOptions() {
 
   optionsList.innerHTML = "";
 
-  floors.forEach((floor) => {
+  floors.forEach((floor, index) => {
     const item = document.createElement("div");
     item.className = `dropdown-item ${floor.id === currentFloorId ? "active" : ""}`;
-    item.textContent = floor.name;
+    item.setAttribute("draggable", "true");
+    item.dataset.index = index;
+
+    // ۱. ایجاد بخش عنوان فضا
+    const titleSpan = document.createElement("span");
+    titleSpan.className = "dropdown-item-title";
+    titleSpan.textContent = floor.name;
+
+    // ۲. ایجاد دکمه ضربدر حذف
+    const deleteBtn = document.createElement("button");
+    deleteBtn.className = "delete-zone-btn";
+    deleteBtn.innerHTML = "&#10005;";
+    deleteBtn.title = "حذف فضا";
+
+    deleteBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      openDeleteZoneModal(floor.id, floor.name);
+    });
+
+    item.appendChild(titleSpan);
+    item.appendChild(deleteBtn);
 
     item.addEventListener("click", () => {
       const currentFloor = getCurrentFloor();
@@ -852,6 +928,36 @@ function renderZoneSelectOptions() {
       renderZoneSelectOptions();
     });
 
+    // --- پیاده‌سازی Drag and Drop با انیمیشن ---
+    item.addEventListener("dragstart", (e) => {
+      e.dataTransfer.effectAllowed = "move";
+      e.dataTransfer.setData("text/plain", index);
+      item.classList.add("dragging");
+    });
+
+    item.addEventListener("dragend", () => {
+      item.classList.remove("dragging");
+    });
+
+    item.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "move";
+      const draggingItem = optionsList.querySelector(".dragging");
+      if (!draggingItem || draggingItem === item) return;
+
+      const items = Array.from(optionsList.querySelectorAll(".dropdown-item"));
+      const draggingIndex = items.indexOf(draggingItem);
+      const targetIndex = items.indexOf(item);
+
+      if (draggingIndex !== targetIndex) {
+        const movedFloor = floors.splice(draggingIndex, 1)[0];
+        floors.splice(targetIndex, 0, movedFloor);
+
+        renderZoneSelectOptions();
+        saveState();
+      }
+    });
+
     optionsList.appendChild(item);
   });
 
@@ -860,6 +966,47 @@ function renderZoneSelectOptions() {
     currentLabel.textContent = activeFloor.name;
   }
 }
+
+// --- مدیریت مودال حذف فضا ---
+function openDeleteZoneModal(id, name) {
+  zoneIdToDelete = id;
+  const modal = document.getElementById("delete-zone-modal");
+  const msg = document.getElementById("delete-modal-msg");
+  if (msg) msg.textContent = `آیا از حذف فضای "${name}" اطمینان دارید؟`;
+  if (modal) modal.style.display = "flex";
+}
+
+function closeDeleteZoneModal() {
+  zoneIdToDelete = null;
+  const modal = document.getElementById("delete-zone-modal");
+  if (modal) modal.style.display = "none";
+}
+
+document.getElementById("cancel-delete-zone-btn")?.addEventListener("click", closeDeleteZoneModal);
+
+document.getElementById("confirm-delete-zone-btn")?.addEventListener("click", () => {
+  if (!zoneIdToDelete) return;
+
+  if (floors.length <= 1) {
+    alert("حداقل باید یک فضا در سالن وجود داشته باشد!");
+    closeDeleteZoneModal();
+    return;
+  }
+
+  floors = floors.filter((f) => f.id !== zoneIdToDelete);
+  delete zoneHistory[zoneIdToDelete];
+
+  if (currentFloorId === zoneIdToDelete) {
+    currentFloorId = floors[0].id;
+  }
+
+  closeDeleteZoneModal();
+  saveState();
+  renderZoneSelectOptions();
+  clearSelection();
+  closeSidebar();
+  renderSeats();
+});
 
 function closeZoneDropdown() {
   const menu = document.getElementById("dropdown-menu");
@@ -970,6 +1117,7 @@ function saveZoneNameChange() {
   if (newName && currentFloor) {
     currentFloor.name = newName;
     renderZoneSelectOptions();
+    saveState();
   }
 
   editZoneInput.style.display = "none";
@@ -1033,24 +1181,7 @@ document.getElementById("delete-seat-toolbar-btn")?.addEventListener("click", ()
   }
 });
 
-// --- ابزارها و زوم ---
-function setTool(tool) {
-  currentTool = tool;
-  const toolSelect = document.getElementById("tool-select");
-  if (toolSelect) toolSelect.value = tool;
-
-  if (currentTool === "hand") {
-    stage.draggable(true);
-    stage.container().style.cursor = "grab";
-  } else {
-    stage.draggable(false);
-    stage.container().style.cursor = "default";
-  }
-  renderSeats();
-}
-
-document.getElementById("tool-select")?.addEventListener("change", (e) => setTool(e.target.value));
-
+// --- ابزار زوم ---
 const scaleBy = 1.1;
 stage.on("wheel", (e) => {
   e.evt.preventDefault();
@@ -1076,7 +1207,7 @@ let isSelecting = false;
 let startPos = { x: 0, y: 0 };
 
 stage.on("mousedown", (e) => {
-  if (currentTool !== "move" || e.target !== stage) return;
+  if (e.evt.button !== 0 || e.target !== stage) return;
   e.evt.preventDefault();
 
   const transform = stage.getAbsoluteTransform().copy().invert();
@@ -1157,80 +1288,12 @@ function getSalonIdFromURL() {
   return null;
 }
 
-// --- ارسال جیسون نهایی به ای‌پای‌آی لاراول با متد PUT ---
-// async function exportToBackendJSON() {
-//   const salonId = getSalonIdFromURL();
-
-//   if (!salonId) {
-//     alert("آی‌دی سالن از آدرس مرورگر (URL) دریافت نشد!");
-//     return;
-//   }
-
-//   const currentFloor = getCurrentFloor();
-//   if (currentFloor) {
-//     currentFloor.sections = getActiveSections();
-//   }
-
-//   const exportedFloors = floors.map((floor) => {
-//     return {
-//       id: floor.id,
-//       name: floor.name,
-//       sections: (floor.sections || []).map((sec) => ({
-//         id: sec.id,
-//         name: sec.name,
-//         x: sec.x,
-//         y: sec.y,
-//         seats: (sec.seats || []).map((seat) => ({
-//           id: seat.id,
-//           row: seat.row,
-//           number: seat.number,
-//           x: seat.x,
-//           y: seat.y,
-//           price: seat.price || 0,
-//           type: seat.type || "regular",
-//           customText: seat.customText || null,
-//         })),
-//       })),
-//     };
-//   });
-
-//   const payload = {
-//     salon_id: salonId,
-//     floors: exportedFloors,
-//   };
-
-//   try {
-//     const response = await fetch(`/salon/${salonId}/layout`, {
-//       method: "PUT",
-//       headers: {
-//         "Content-Type": "application/json",
-//         "Accept": "application/json",
-//         "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") || "",
-//       },
-//       body: JSON.stringify(payload),
-//     });
-
-//     if (response.ok) {
-//       alert("چیدمان سالن با موفقیت ذخیره شد!");
-//     } else {
-//       alert("خطا در ذخیره چیدمان در سرور.");
-//     }
-//   } catch (error) {
-//     console.error("خطا در ارتباط با سرور:", error);
-//   }
-// }
-
-
-
-
+// --- ارسال جیسون نهایی به ای‌پای‌آی لاراول با متد PUT و فیلد position ---
 async function exportToBackendJSON() {
   const salonId = getSalonIdFromURL();
 
-  // ۱. بررسی استخراج آی‌دی
-  console.log("آی‌دی سالن استخراج‌شده از URL:", salonId);
-
   if (!salonId) {
-    alert("آی‌دی سالن یافت نشد! لطفاً آدرس مرورگر را بررسی کنید (مثلاً: /salon/10/layout)");
+    alert("آی‌دی سالن از آدرس مرورگر (URL) دریافت نشد!");
     return;
   }
 
@@ -1239,36 +1302,35 @@ async function exportToBackendJSON() {
     currentFloor.sections = getActiveSections();
   }
 
-  const exportedFloors = floors.map((floor) => ({
-    id: floor.id,
-    name: floor.name,
-    sections: (floor.sections || []).map((sec) => ({
-      id: sec.id,
-      name: sec.name,
-      x: sec.x,
-      y: sec.y,
-      seats: (sec.seats || []).map((seat) => ({
-        id: seat.id,
-        row: seat.row,
-        number: seat.number,
-        x: seat.x,
-        y: seat.y,
-        price: seat.price || 0,
-        type: seat.type || "regular",
-        customText: seat.customText || null,
+  const exportedFloors = floors.map((floor, index) => {
+    return {
+      id: floor.id,
+      name: floor.name,
+      position: index + 1,
+      sections: (floor.sections || []).map((sec) => ({
+        id: sec.id,
+        name: sec.name,
+        x: sec.x,
+        y: sec.y,
+        seats: (sec.seats || []).map((seat) => ({
+          id: seat.id,
+          row: seat.row,
+          number: seat.number,
+          x: seat.x,
+          y: seat.y,
+          price: seat.price || 0,
+          type: seat.type || "regular",
+          customText: seat.customText || null,
+        })),
       })),
-    })),
-  }));
+    };
+  });
 
   const payload = {
     salon_id: salonId,
     floors: exportedFloors,
   };
 
-  // ۲. بررسی دیتای نهایی ارسال‌شده
-  console.log("جیسون نهایی ارسال به بک‌اند:", JSON.stringify(payload, null, 2));
-
-  // ارسال واقعی به سرور
   try {
     const response = await fetch(`/salon/${salonId}/layout`, {
       method: "PUT",
@@ -1286,19 +1348,14 @@ async function exportToBackendJSON() {
       alert("خطا در ذخیره چیدمان در سرور.");
     }
   } catch (error) {
-    console.error("خطا در ارتباط با سرور (طبیعی است چون لاراول هنور متصل نیست):", error);
+    console.error("خطا در ارتباط با سرور:", error);
   }
 }
 
-
-
-
-
-
 document.getElementById("save-btn")?.addEventListener("click", exportToBackendJSON);
 
-// مقداردهی اولیه
+// مقداردهی اولیه برنامه
+loadFromLocalStorage();
 renderZoneSelectOptions();
-setTool("move");
 saveState();
 renderSeats();

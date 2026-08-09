@@ -5,11 +5,11 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="csrf-token" content="{{ csrf_token() }}" />
     <title>hall-editor</title>
   </head>
   <body>
-   <div class="toolbar">
+    <div class="toolbar">
       <!-- بخش انتخاب فضا -->
       <div class="control-group">
         <label class="zone-label">انتخاب فضا:</label>
@@ -17,17 +17,38 @@
           <div class="zone-header-wrapper">
             <button id="dropdown-trigger" class="dropdown-trigger">
               <span id="current-zone-label">سالن اصلی</span>
-              <svg width="12" height="12" fill="currentColor" viewBox="0 0 24 24">
+              <svg
+                width="12"
+                height="12"
+                fill="currentColor"
+                viewBox="0 0 24 24"
+              >
                 <path d="M7 10l5 5 5-5z"></path>
               </svg>
             </button>
             <!-- دکمه ویرایش نام فضای فعلی -->
-            <button id="edit-zone-name-btn" class="icon-btn" title="ویرایش نام فضا">
-              <svg width="14" height="14" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34a.9959.9959 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
+            <button
+              id="edit-zone-name-btn"
+              class="icon-btn"
+              title="ویرایش نام فضا"
+            >
+              <svg
+                width="14"
+                height="14"
+                fill="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34a.9959.9959 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"
+                />
               </svg>
             </button>
-            <input type="text" id="edit-zone-input" class="edit-zone-input" style="display: none;" />
+            <input
+              type="text"
+              id="edit-zone-input"
+              class="edit-zone-input"
+              style="display: none"
+            />
           </div>
 
           <div id="dropdown-menu" class="dropdown-menu">
@@ -82,12 +103,14 @@
             border: none;
             outline: none;
             cursor: pointer;
-            font-family: 'Vazirmatn';
+            font-family: &quot;Vazirmatn&quot;;
             padding: 2px 5px;
           "
         >
           <option value="move" style="background: #262626">Move (V)</option>
-          <option value="hand" style="background: #262626">Hand tool (H)</option>
+          <option value="hand" style="background: #262626">
+            Hand tool (H)
+          </option>
         </select>
       </div>
 
@@ -244,6 +267,22 @@
             <option value="vip">ویژه (VIP)</option>
             <option value="wheelchair">ویلچر (Wheelchair)</option>
           </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- افزودن مودال تایید حذف در انتهای فایل index.html (قبل از بستن body) -->
+    <div id="delete-zone-modal" class="modal-backdrop" style="display: none">
+      <div class="modal-card">
+        <h3>حذف فضا</h3>
+        <p id="delete-modal-msg">آیا از حذف این فضا اطمینان دارید؟</p>
+        <div class="modal-actions">
+          <button id="cancel-delete-zone-btn" class="modal-btn btn-cancel">
+            انصراف
+          </button>
+          <button id="confirm-delete-zone-btn" class="modal-btn btn-danger">
+            بله، حذف شود
+          </button>
         </div>
       </div>
     </div>

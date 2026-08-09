@@ -497,3 +497,159 @@ body {
   background-color: #333333;
   color: #ff6900; /* رنگ نارنجی هنگام هور یا انتخاب بودن */
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* --- استایل دکمه ضربدر و آیتم‌های دراپ‌داون --- */
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  font-size: 13px;
+  cursor: grab;
+  border-radius: 6px;
+  color: #ffffff;
+  background-color: transparent;
+  margin-bottom: 4px;
+  transition: transform 0.2s cubic-bezier(0.2, 0, 0.2, 1), background-color 0.2s ease, opacity 0.2s ease;
+  user-select: none;
+}
+
+.dropdown-item:hover {
+  background-color: #333333;
+}
+
+.dropdown-item.active {
+  background-color: #2a2a2a;
+  color: #ff6900;
+  font-weight: bold;
+}
+
+.dropdown-item.dragging {
+  opacity: 0.4;
+  transform: scale(0.98);
+  cursor: grabbing;
+}
+
+.dropdown-item-title {
+  pointer-events: none;
+}
+
+.delete-zone-btn {
+  background: none;
+  border: none;
+  color: #e74c3c;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 4px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.delete-zone-btn:hover {
+  background-color: rgba(231, 76, 60, 0.15);
+  color: #ff4d4d;
+}
+
+/* --- استایل اختصاصی مودال تأیید حذف --- */
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(4px);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.modal-card {
+  background: #262626;
+  border: 1px solid #444;
+  border-radius: 12px;
+  padding: 20px;
+  width: 320px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+  color: #fff;
+  text-align: center;
+  font-family: 'Vazirmatn', sans-serif;
+  animation: popIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.modal-card h3 {
+  margin: 0 0 10px 0;
+  font-size: 16px;
+  color: #ff6900;
+}
+
+.modal-card p {
+  font-size: 13px;
+  color: #ccc;
+  margin-bottom: 20px;
+  line-height: 1.5;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+.modal-btn {
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-cancel {
+  background: #3a3a3a;
+  color: #ccc;
+}
+
+.btn-cancel:hover {
+  background: #4a4a4a;
+  color: #fff;
+}
+
+.btn-danger {
+  background: #e74c3c;
+  color: #fff;
+}
+
+.btn-danger:hover {
+  background: #c0392b;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes popIn {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
